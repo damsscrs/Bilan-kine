@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilan Kinésithérapie Initial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<style>
+  :root {
+    --navy: #1a2e4a;
+    --navy-light: #2a4a70;
+    --gold: #c9922a;
+    --gold-light: #e8b84b;
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: #ddd9d0;
+    --text: #1a1a1a;
+    --text-muted: #6b6560;
+    --radius: 10px;
+    --touch-min: 44px;
+    --font-base: 15px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: var(--font-base); }
+  body { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+  /* ===== LAYOUT ===== */
+  .app { max-width: 1000px; margin: 0 auto; padding: 16px; }
+
+  /* ===== HEADER ===== */
+  .header { background: var(--navy); color: #fff; border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .header-left h1 { font-size: 18px; font-weight: 600; }
+  .header-left p { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+  .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ===== BOUTONS ===== */
+  .btn { min-height: var(--touch-min); padding: 0 18px; border-radius: 8px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover, .btn-gold:active { background: var(--gold-light); }
+  .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.4); }
+  .btn-outline:hover, .btn-outline:active { background: rgba(255,255,255,0.1); }
+  .btn-sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+
+  /* ===== TABS ===== */
+  .tabs-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 14px; padding-bottom: 2px; }
+  .tabs-wrapper::-webkit-scrollbar { display: none; }
+  .tabs { display: flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; width: max-content; min-width: 100%; }
+  .tab { flex: 0 0 auto; min-height: 44px; padding: 0 16px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); transition: all .15s; border: none; background: none; white-space: nowrap; -webkit-appearance: none; }
+  .tab.active { background: var(--navy); color: #fff; }
+  .tab:hover:not(.active) { background: var(--bg); }
+
+  /* ===== SECTIONS ===== */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+  .section-header { background: var(--navy); color: #fff; padding: 10px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.3px; }
+  .section-body { padding: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ===== GRILLES ===== */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field-full { grid-column: 1 / -1; }
+
+  /* ===== CHAMPS ===== */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input, .field select, .field textarea {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 15px; font-family: inherit;
+    color: var(--text); background: #fff; transition: border-color .15s;
+    min-height: var(--touch-min); -webkit-appearance: none;
+  }
+  .field textarea { min-height: 80px; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--navy); }
+
+  /* ===== RADIO GROUP ===== */
+  .radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 13px; transition: all .15s; min-height: var(--touch-min); }
+  .radio-group input[type="radio"], .radio-group input[type="checkbox"] { display: none; }
+  .radio-group label:has(input:checked) { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* ===== PAIN SCALE ===== */
+  .pain-scale { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .pain-btn { width: 40px; height: 40px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; font-size: 13px; font-weight: 700; color: #fff; transition: all .15s; display: flex; align-items: center; justify-content: center; }
+  .pain-btn:hover, .pain-btn:active { transform: scale(1.1); }
+  .pain-btn.selected { border-color: var(--navy); transform: scale(1.15); }
+  .pain-label { font-size: 12px; color: var(--text-muted); margin-left: 6px; }
+
+  /* ===== TABLEAUX DE TESTING ===== */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 6px; }
+  .test-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+  .test-table th { background: var(--bg); padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .test-table td { padding: 6px 8px; border-bottom: 1px solid #f0ece6; vertical-align: middle; }
+  .test-table td:first-child { font-size: 12px; }
+  .test-table tr:hover td { background: #fafaf8; }
+  .test-table input { border: 1px solid transparent; background: transparent; width: 100%; font-size: 13px; font-family: inherit; color: var(--text); padding: 4px 6px; border-radius: 5px; min-height: 36px; }
+  .test-table input:focus { outline: none; border-color: var(--border); background: #fff; }
+  .test-table select { border: 1px solid transparent; background: transparent; font-size: 13px; font-family: inherit; color: var(--text); padding: 4px 6px; border-radius: 5px; min-height: 36px; cursor: pointer; width: 100%; -webkit-appearance: none; }
+  .test-table select:focus { outline: none; border-color: var(--border); }
+
+  /* ===== ÉCHELLES ===== */
+  .scale-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0ece6; }
+  .scale-row:last-child { border-bottom: none; }
+  .scale-name { font-size: 13px; font-weight: 500; min-width: 110px; color: var(--text-muted); }
+  .scale-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; min-height: var(--touch-min); }
+  .scale-input:focus { outline: none; border-color: var(--navy); }
+  .scale-max { font-size: 12px; color: var(--text-muted); min-width: 36px; }
+
+  /* ===== CANVAS BODY CHART ===== */
+  #body-canvas { cursor: crosshair; touch-action: none; }
+  .canvas-toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .color-btn { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+  .color-btn.active { border-color: var(--navy); transform: scale(1.15); }
+  .tool-btn { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 12px; background: #fff; font-family: inherit; min-height: 36px; }
+  .tool-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* ===== OBJECTIFS ===== */
+  .obj-list { display: flex; flex-direction: column; gap: 8px; }
+  .obj-item { display: flex; gap: 8px; align-items: flex-start; }
+  .obj-num { min-width: 26px; height: 26px; background: var(--navy); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; margin-top: 8px; flex-shrink: 0; }
+  .obj-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; min-height: var(--touch-min); }
+  .obj-input:focus { outline: none; border-color: var(--navy); }
+  .add-btn { background: none; border: 1.5px dashed var(--border); color: var(--text-muted); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 4px; width: 100%; font-family: inherit; min-height: var(--touch-min); }
+  .add-btn:hover, .add-btn:active { border-color: var(--navy); color: var(--navy); }
+
+  /* ===== STATUS BAR ===== */
+  .status-bar { background: var(--gold); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+
+  /* ===== IMPORT ZONE ===== */
+  .import-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: all .15s; }
+  .import-zone:hover, .import-zone:active { border-color: var(--navy); background: rgba(26,46,74,0.03); }
+
+  /* ===== RESPONSIVE IPAD ===== */
+
+  /* Portrait iPad (768px) */
+  @media (max-width: 820px) {
+    :root { --font-base: 15px; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .header-right .btn { flex: 1; justify-content: center; }
+    .tab { font-size: 12px; padding: 0 10px; }
+  }
+
+  /* Portrait serré / iPhone */
+  @media (max-width: 600px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .header-right { width: 100%; }
+  }
+
+  /* Paysage iPad — plus d'espace, on peut étaler */
+  @media (min-width: 821px) and (max-width: 1200px) {
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  /* Touch targets partout */
+  @media (hover: none) and (pointer: coarse) {
+    .test-table input, .test-table select { min-height: 40px; font-size: 14px; }
+    .pain-btn { width: 44px; height: 44px; }
+    .tab { min-height: 44px; }
+  }
+</style>
+<script>
+// Navigation tabs — disponible immédiatement
+function showTab(n){
+  var contents = document.querySelectorAll('.tab-content');
+  var tabs = document.querySelectorAll('.tab');
+  contents.forEach(function(el,i){ el.style.display = i===n ? 'block' : 'none'; });
+  tabs.forEach(function(el,i){ 
+    if(i===n){ el.classList.add('active'); } else { el.classList.remove('active'); }
+  });
+}
+</script>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>⚕ Bilan Kinésithérapie Initial</h1>
+      <p>Aucune donnée stockée — export PDF direct</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-outline" onclick="document.getElementById('import-input').click()">📂 Importer PDF</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-gold" onclick="exportPDF()">⬇ Exporter PDF</button>
+    </div>
+  </div>
+
+  <div id="status-bar" class="status-bar"></div>
+
+  <!-- TABS -->
+  <div class="tabs-wrapper">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(0)">1 · Anamnèse</button>
+    <button class="tab" onclick="showTab(1)">2 · Antécédents</button>
+    <button class="tab" onclick="showTab(2)">3 · Douleur</button>
+    <button class="tab" onclick="showTab(3)">4 · Schéma corporel</button>
+    <button class="tab" onclick="showTab(4)">5 · Testing & VALD</button>
+    <button class="tab" onclick="showTab(5)">6 · Objectifs & Plan</button>
+  </div>
+  </div>
+
+  <!-- ===== TAB 0 : ANAMNÈSE ===== -->
+  <div class="tab-content" id="tab-0">
+
+    <div class="section">
+      <div class="section-header">👤 Identité patient</div>
+      <div class="section-body">
+        <div class="grid-3">
+          <div class="field"><label>Nom</label><input id="nom" placeholder="Dupont"></div>
+          <div class="field"><label>Prénom</label><input id="prenom" placeholder="Jean"></div>
+          <div class="field"><label>Date de naissance</label><input id="ddn" type="date"></div>
+          <div class="field"><label>Profession</label><input id="profession" placeholder="Ex : enseignant"></div>
+          <div class="field"><label>Côté dominant</label>
+            <select id="dominance"><option value="">—</option><option>Droitier</option><option>Gaucher</option><option>Ambidextre</option></select>
+          </div>
+          <div class="field"><label>Date du bilan</label><input id="date-bilan" type="date"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">🩺 Motif de consultation</div>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Motif principal</label>
+            <select id="motif-type">
+              <option value="">Sélectionner…</option>
+              <option>Post-opératoire</option>
+              <option>Traumatologie sportive</option>
+              <option>Douleur chronique</option>
+              <option>Rééducation neurologique</option>
+              <option>Bilan fonctionnel</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="field"><label>Région anatomique</label><input id="region" placeholder="Ex : épaule droite, genou gauche"></div>
+          <div class="field field-full"><label>Description du motif</label>
+            <textarea id="motif-desc" placeholder="Décrivez la plainte principale du patient, le mécanisme lésionnel, la date d'apparition…"></textarea>
+          </div>
+          <div class="field"><label>Médecin prescripteur</label><input id="medecin" placeholder="Dr …"></div>
+          <div class="field"><label>Ordonnance du</label><input id="date-ordo" type="date"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">📋 Histoire de la maladie</div>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field field-full"><label>Chronologie & évolution</label>
+            <textarea id="histoire" rows="4" placeholder="Début des symptômes, évolution, traitements déjà effectués, imagerie…"></textarea>
+          </div>
+          <div class="field"><label>Facteurs aggravants</label>
+            <textarea id="aggravants" placeholder="Mouvements, positions…"></textarea>
+          </div>
+          <div class="field"><label>Facteurs soulageants</label>
+            <textarea id="soulageants" placeholder="Repos, chaleur, position…"></textarea>
+          </div>
+          <div class="field field-full"><label>Traitements en cours</label>
+            <input id="traitements" placeholder="Médicaments, infiltrations, autres thérapies…">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== TAB 1 : ANTÉCÉDENTS ===== -->
+  <div class="tab-content" id="tab-1" style="display:none">
+
+    <div class="section">
+      <div class="section-header">🏥 Antécédents médicaux & chirurgicaux</div>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Antécédents médicaux</label>
+            <textarea id="atcd-med" rows="4" placeholder="Pathologies connues, maladies chroniques…"></textarea>
+          </div>
+          <div class="field"><label>Antécédents chirurgicaux</label>
+            <textarea id="atcd-chir" rows="4" placeholder="Opérations, dates approximatives…"></textarea>
+          </div>
+          <div class="field field-full"><label>Antécédents traumatiques / sportifs</label>
+            <textarea id="atcd-trauma" placeholder="Entorses, fractures, anciens épisodes…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">💊 Traitements & contexte</div>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Médicaments</label>
+            <textarea id="medicaments" placeholder="Nom, posologie si connu…"></textarea>
+          </div>
+          <div class="field"><label>Allergies connues</label>
+            <textarea id="allergies" placeholder="Médicaments, matériaux…"></textarea>
+          </div>
+          <div class="field"><label>Niveau d'activité physique</label>
+            <div class="radio-group">
+              <label><input type="radio" name="activite" value="sédentaire"> Sédentaire</label>
+              <label><input type="radio" name="activite" value="léger"> Léger</label>
+              <label><input type="radio" name="activite" value="modéré"> Modéré</label>
+              <label><input type="radio" name="activite" value="intense"> Intense</label>
+              <label><input type="radio" name="activite" value="sportif haut niveau"> Haut niveau</label>
+            </div>
+          </div>
+          <div class="field"><label>Sport(s) pratiqué(s)</label>
+            <input id="sport" placeholder="Ex : football, natation…"></div>
+          <div class="field field-full"><label>Contexte professionnel & facteurs de risque</label>
+            <textarea id="contexte-pro" placeholder="Port de charges, travail en hauteur, sédentarité prolongée…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== TAB 2 : DOULEUR & FONCTIONS ===== -->
+  <div class="tab-content" id="tab-2" style="display:none">
+
+    <div class="section">
+      <div class="section-header">😣 Évaluation de la douleur</div>
+      <div class="section-body">
+        <div style="margin-bottom:16px">
+          <div class="field" style="margin-bottom:8px"><label>EVA / EN — Douleur au repos</label></div>
+          <div class="pain-scale" id="pain-rest"></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="field" style="margin-bottom:8px"><label>EVA / EN — Douleur à l'effort</label></div>
+          <div class="pain-scale" id="pain-effort"></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="field" style="margin-bottom:8px"><label>EVA / EN — Douleur maximale (nyctalgie, pic)</label></div>
+          <div class="pain-scale" id="pain-max"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Type de douleur</label>
+            <div class="radio-group">
+              <label><input type="radio" name="pain-type" value="mécanique"> Mécanique</label>
+              <label><input type="radio" name="pain-type" value="inflammatoire"> Inflammatoire</label>
+              <label><input type="radio" name="pain-type" value="mixte"> Mixte</label>
+              <label><input type="radio" name="pain-type" value="neuropathique"> Neuropathique</label>
+            </div>
+          </div>
+          <div class="field"><label>Caractère</label>
+            <div class="radio-group">
+              <label><input type="radio" name="pain-char" value="aigu"> Aigu</label>
+              <label><input type="radio" name="pain-char" value="subaigu"> Subaigu</label>
+              <label><input type="radio" name="pain-char" value="chronique"> Chronique</label>
+            </div>
+          </div>
+          <div class="field field-full"><label>Description qualitative</label>
+            <textarea id="pain-desc" placeholder="Brûlure, élancement, coup de poignard, pesanteur, fourmillements…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">📊 Échelles fonctionnelles</div>
+      <div class="section-body">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Renseignez les scores pertinents selon la pathologie</p>
+        <div class="scale-section">
+          <div class="scale-row">
+            <span class="scale-name">DASH</span>
+            <input class="scale-input" id="scale-dash" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">QuickDASH</span>
+            <input class="scale-input" id="scale-quickdash" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">IKDC (genou)</span>
+            <input class="scale-input" id="scale-ikdc" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">KOOS (genou)</span>
+            <input class="scale-input" id="scale-koos" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">HOOS (hanche)</span>
+            <input class="scale-input" id="scale-hoos" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">Constant (épaule)</span>
+            <input class="scale-input" id="scale-constant" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">ASES (épaule)</span>
+            <input class="scale-input" id="scale-ases" placeholder="Score /100" type="number" min="0" max="100">
+            <span class="scale-max">/100</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">Oswestry (rachis)</span>
+            <input class="scale-input" id="scale-oswestry" placeholder="Score %" type="number" min="0" max="100">
+            <span class="scale-max">%</span>
+          </div>
+          <div class="scale-row">
+            <span class="scale-name">Autre</span>
+            <input class="scale-input" id="scale-autre-nom" placeholder="Nom de l'échelle" style="flex:0.5;margin-right:6px">
+            <input class="scale-input" id="scale-autre-val" placeholder="Score">
+            <span class="scale-max"></span>
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px"><label>Observations fonctionnelles</label>
+          <textarea id="fonc-obs" placeholder="Limitations du quotidien, gêne professionnelle, qualité de sommeil…"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== TAB 3 : SCHÉMA CORPOREL ===== -->
+  <div class="tab-content" id="tab-3" style="display:none">
+    <div class="section">
+      <div class="section-header">🧍 Schéma corporel — annotation libre</div>
+      <div class="section-body">
+        <div class="canvas-toolbar">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600">COULEUR :</span>
+          <div class="color-btn active" style="background:#e74c3c" data-color="#e74c3c" onclick="setColor(this,'#e74c3c')" title="Douleur"></div>
+          <div class="color-btn" style="background:#3498db" data-color="#3498db" onclick="setColor(this,'#3498db')" title="Raideur"></div>
+          <div class="color-btn" style="background:#27ae60" data-color="#27ae60" onclick="setColor(this,'#27ae60')" title="Zone traitée"></div>
+          <div class="color-btn" style="background:#f39c12" data-color="#f39c12" onclick="setColor(this,'#f39c12')" title="Paresthésies"></div>
+          <div class="color-btn" style="background:#9b59b6" data-color="#9b59b6" onclick="setColor(this,'#9b59b6')" title="Irradiation"></div>
+          <div class="color-btn" style="background:#1a2e4a" data-color="#1a2e4a" onclick="setColor(this,'#1a2e4a')" title="Autre"></div>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-weight:600">TAILLE :</span>
+          <input type="range" min="2" max="20" value="6" id="brush-size" style="width:80px">
+          <span style="font-size:11px;color:var(--text-muted)">OUTIL :</span>
+          <button class="tool-btn active" id="tool-draw" onclick="setTool('draw')">✏ Dessin</button>
+          <button class="tool-btn" id="tool-erase" onclick="setTool('erase')">⬜ Efface</button>
+          <button class="tool-btn" onclick="clearCanvas()">🗑 Effacer tout</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+          <span>🔴 Douleur</span><span>🔵 Raideur</span><span>🟢 Zone traitée</span><span>🟠 Paresthésies</span><span>🟣 Irradiation</span><span>⚫ Autre</span>
+        </div>
+        <div style="position:relative;display:inline-block;max-width:100%;width:100%">
+          <img id="body-bg-img" src="data:image/png;base64,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" style="width:100%;display:block;border-radius:8px;border:1px solid var(--border);user-select:none;-webkit-user-drag:none">
+          <canvas id="body-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;border-radius:8px"></canvas>
+        </div>
+        <div class="field" style="margin-top:12px"><label>Légende / notes complémentaires</label>
+          <textarea id="schema-notes" placeholder="Décrivez les zones annotées, irradiations, topographie précise…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 4 : TESTING & VALD ===== -->
+  <div class="tab-content" id="tab-4" style="display:none">
+
+    <!-- Sélecteur d'articulation -->
+    <div class="section">
+      <div class="section-header">🦴 Articulation à tester</div>
+      <div class="section-body">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:200px">
+            <label>Articulation</label>
+            <select id="articu-select" onchange="loadArticulation()">
+              <option value="">— Sélectionner —</option>
+              <option value="epaule">Épaule</option>
+              <option value="coude">Coude</option>
+              <option value="poignet">Poignet / Main</option>
+              <option value="hanche">Hanche</option>
+              <option value="genou">Genou</option>
+              <option value="cheville">Cheville / Pied</option>
+              <option value="cervical">Rachis cervical</option>
+              <option value="lombaire">Rachis lombaire</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;min-width:200px">
+            <label>Côté principal</label>
+            <select id="cote-select">
+              <option value="bilatéral">Bilatéral</option>
+              <option value="droit">Droit</option>
+              <option value="gauche">Gauche</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" style="margin-top:18px" onclick="loadArticulation()">Charger le bilan</button>
+        </div>
+        <div id="articu-hint" style="margin-top:10px;font-size:12px;color:var(--text-muted);display:none"></div>
+      </div>
+    </div>
+
+    <!-- TESTING MUSCULAIRE -->
+    <div class="section">
+      <div class="section-header">💪 Testing musculaire (MMT 0–5)</div>
+      <div class="section-body">
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="add-btn" style="width:auto;padding:5px 12px" onclick="addMuscleRow()">+ Ligne manuelle</button>
+        </div>
+        <table class="test-table">
+          <thead><tr>
+            <th style="width:35%">Muscle / Groupe</th>
+            <th style="width:10%;text-align:center">MMT D</th>
+            <th style="width:10%;text-align:center">MMT G</th>
+            <th style="width:10%;text-align:center">Réf.</th>
+            <th>Observations</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="muscle-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AMPLITUDES ARTICULAIRES -->
+    <div class="section">
+      <div class="section-header">🔄 Amplitudes articulaires</div>
+      <div class="section-body">
+        <div style="margin-bottom:10px">
+          <button class="add-btn" style="width:auto;padding:5px 12px" onclick="addArticularRow()">+ Ligne manuelle</button>
+        </div>
+        <table class="test-table">
+          <thead><tr>
+            <th style="width:26%">Mouvement</th>
+            <th style="width:9%;text-align:center">D (°)</th>
+            <th style="width:9%;text-align:center">G (°)</th>
+            <th style="width:9%;text-align:center">Norme (°)</th>
+            <th style="width:13%;text-align:center">Asym. / Norme</th>
+            <th style="width:8%;text-align:center">Douleur</th>
+            <th>Observations</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="articular-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TESTS SPÉCIFIQUES -->
+    <div class="section">
+      <div class="section-header">🔍 Tests ligamentaires & spécifiques</div>
+      <div class="section-body">
+        <div style="margin-bottom:10px">
+          <button class="add-btn" style="width:auto;padding:5px 12px" onclick="addSpecificRow()">+ Test manuel</button>
+        </div>
+        <table class="test-table">
+          <thead><tr>
+            <th style="width:30%">Nom du test</th>
+            <th style="width:18%">Structure testée</th>
+            <th style="width:14%;text-align:center">Résultat</th>
+            <th>Interprétation / notes</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="specific-tbody"></tbody>
+        </table>
+        <div class="field" style="margin-top:14px">
+          <label>Observations générales</label>
+          <textarea id="testing-obs" placeholder="Compensations, asymétries, douleurs reproduites, posture…"></textarea>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- SECTION VALD -->
+    <div class="section">
+      <div class="section-header">📊 Dynamométrie VALD — DynaMo</div>
+      <div class="section-body">
+
+        <!-- Zone de collage texte VALD Hub -->
+        <div style="margin-bottom:16px">
+          <div class="field" style="margin-bottom:8px">
+            <label>Coller les résultats depuis VALD Hub <span style="font-weight:400;color:var(--text-muted)">(Timeline → bouton Copy)</span></label>
+            <textarea id="vald-paste-input" rows="5" placeholder="Exemple :
+Date: 22 January 2026
+DynaMo
+Knee Extension Seated
+Max Force (N): Left 308 Right 276 Asymmetry 10% Left
+Knee Flexion Prone
+Max Force (N): Left 203 Right 199 Asymmetry 2.0% Left" style="font-family:monospace;font-size:12px;background:#fafaf8"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-gold btn-sm" onclick="parseValdText()">⚡ Extraire les données</button>
+            <button class="btn btn-outline btn-sm" style="background:var(--navy);color:#fff" onclick="document.getElementById('vald-file-input').click()">📷 Photo à la place</button>
+            <input type="file" id="vald-file-input" accept="image/*" style="display:none" onchange="analyzeValdImage(event)">
+            <button class="add-btn" style="width:auto;padding:5px 12px;font-size:11px" onclick="addValdRow()">+ Ligne manuelle</button>
+          </div>
+        </div>
+
+        <!-- Statut -->
+        <div id="vald-status" style="display:none;border-radius:6px;padding:8px 14px;font-size:12px;margin-bottom:12px;border:1px solid var(--border);background:var(--bg)">
+          <span id="vald-status-text"></span>
+        </div>
+
+        <!-- Prévisualisation image -->
+        <img id="vald-preview-img" style="max-width:100%;max-height:200px;border-radius:6px;border:1px solid var(--border);display:none;margin-bottom:12px">
+
+        <!-- Tableau résultats -->
+        <table class="test-table" id="vald-table" style="margin-bottom:4px">
+          <thead><tr>
+            <th style="width:32%">Test / Groupe musculaire</th>
+            <th style="width:11%;text-align:center">Gauche</th>
+            <th style="width:11%;text-align:center">Droite</th>
+            <th style="width:8%;text-align:center">Unité</th>
+            <th style="width:12%;text-align:center">Asymétrie</th>
+            <th style="width:12%;text-align:center">Ratio ago/anta</th>
+            <th style="width:10%;text-align:center">Norme réf.</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="vald-tbody"></tbody>
+        </table>
+
+        <!-- Graphique -->
+        <div id="vald-chart-container" style="margin-top:20px;display:none">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Visualisation force D/G</div>
+          <canvas id="vald-chart" height="240"></canvas>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label>Interprétation clinique</label>
+          <textarea id="vald-interp" placeholder="Asymétries significatives, déficits fonctionnels, objectifs de force, critères de reprise…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 5 : OBJECTIFS & PLAN ===== -->
+  <div class="tab-content" id="tab-5" style="display:none">
+
+    <div class="section">
+      <div class="section-header">🎯 Objectifs thérapeutiques</div>
+      <div class="section-body">
+        <div style="margin-bottom:14px">
+          <div class="field" style="margin-bottom:6px"><label>Objectifs à court terme (1–4 semaines)</label></div>
+          <div class="obj-list" id="obj-court"></div>
+          <button class="add-btn" onclick="addObj('obj-court')">+ Ajouter un objectif court terme</button>
+        </div>
+        <div style="margin-bottom:14px">
+          <div class="field" style="margin-bottom:6px"><label>Objectifs à moyen terme (1–3 mois)</label></div>
+          <div class="obj-list" id="obj-moyen"></div>
+          <button class="add-btn" onclick="addObj('obj-moyen')">+ Ajouter un objectif moyen terme</button>
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:6px"><label>Objectifs à long terme / retour au sport</label></div>
+          <div class="obj-list" id="obj-long"></div>
+          <button class="add-btn" onclick="addObj('obj-long')">+ Ajouter un objectif long terme</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">📅 Plan de traitement</div>
+      <div class="section-body">
+        <div class="grid-2">
+          <div class="field"><label>Fréquence des séances</label>
+            <select id="frequence">
+              <option value="">Sélectionner…</option>
+              <option>1 × / semaine</option>
+              <option>2 × / semaine</option>
+              <option>3 × / semaine</option>
+              <option>Quotidien</option>
+              <option>À définir</option>
+            </select>
+          </div>
+          <div class="field"><label>Durée prévisionnelle</label>
+            <input id="duree-traitement" placeholder="Ex : 6 semaines, 20 séances…">
+          </div>
+          <div class="field field-full"><label>Techniques prévues</label>
+            <div class="radio-group">
+              <label><input type="checkbox" name="tech" value="Mobilisations articulaires"> Mobilisations</label>
+              <label><input type="checkbox" name="tech" value="Renforcement musculaire"> Renforcement</label>
+              <label><input type="checkbox" name="tech" value="Étirements"> Étirements</label>
+              <label><input type="checkbox" name="tech" value="Massage / MTP"> Massage / MTP</label>
+              <label><input type="checkbox" name="tech" value="Électrothérapie"> Électrothérapie</label>
+              <label><input type="checkbox" name="tech" value="Cryothérapie"> Cryothérapie</label>
+              <label><input type="checkbox" name="tech" value="Balnéothérapie"> Balnéo</label>
+              <label><input type="checkbox" name="tech" value="Travail proprioceptif"> Proprioception</label>
+              <label><input type="checkbox" name="tech" value="Rééducation fonctionnelle"> Rééducation fonctionnelle</label>
+              <label><input type="checkbox" name="tech" value="Éducation thérapeutique"> Éducation thérapeutique</label>
+            </div>
+          </div>
+          <div class="field field-full"><label>Notes & plan personnalisé</label>
+            <textarea id="plan-notes" rows="4" placeholder="Protocole spécifique, progressions prévues, consignes au patient, orientation vers d'autres spécialistes…"></textarea>
+          </div>
+          <div class="field"><label>Prochain bilan prévu le</label>
+            <input id="date-prochain-bilan" type="date">
+          </div>
+          <div class="field"><label>Kinésithérapeute</label>
+            <input id="kine-nom" placeholder="Votre nom">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display:flex;justify-content:space-between;margin-top:20px;flex-wrap:wrap;gap:10px">
+    <button class="btn btn-outline" style="background:var(--navy);color:#fff" onclick="saveJSON()">💾 Sauvegarder (JSON)</button>
+    <button class="btn btn-gold" onclick="exportPDF()" style="padding:10px 28px">⬇ Générer le PDF bilan</button>
+  </div>
+
+</div>
+
+<script>
+// ===== TABS =====
+function showTab(n){
+  document.querySelectorAll('.tab-content').forEach((el,i)=>el.style.display=i===n?'block':'none');
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===n));
+}
+
+// ===== PAIN SCALE =====
+const painColors=['#27ae60','#2ecc71','#a8d44e','#d4e44e','#f0d040','#f0b840','#f09040','#e06030','#c03020','#a01010','#700000'];
+function buildPainScale(id){
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  for(let i=0;i<=10;i++){
+    const btn=document.createElement('button');
+    btn.className='pain-btn';
+    btn.textContent=i;
+    btn.style.background=painColors[i];
+    btn.dataset.val=i;
+    btn.dataset.group=id;
+    btn.onclick=()=>selectPain(id,i);
+    el.appendChild(btn);
+  }
+  const lbl=document.createElement('span');
+  lbl.className='pain-label';
+  lbl.id=id+'-val';
+  lbl.textContent='Non renseigné';
+  el.appendChild(lbl);
+}
+function selectPain(group,val){
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b=>b.classList.remove('selected'));
+  const btn=document.querySelector(`[data-group="${group}"][data-val="${val}"]`);
+  if(btn)btn.classList.add('selected');
+  document.getElementById(group+'-val').textContent=`${val}/10`;
+}
+function getPainVal(id){
+  const sel=document.querySelector(`[data-group="${id}"].selected`);
+  return sel?sel.dataset.val:null;
+}
+buildPainScale('pain-rest');
+buildPainScale('pain-effort');
+buildPainScale('pain-max');
+
+// ===== BASE DE DONNÉES CLINIQUE =====
+const DB = {
+  epaule: {
+    hint: "Épaule — post-op fréquent : coiffe des rotateurs, Bankart, prothèse",
+    muscles: [
+      {m:"Deltoïde antérieur (flexion)",n:"5"},{m:"Deltoïde moyen (abduction)",n:"5"},
+      {m:"Deltoïde postérieur (extension)",n:"5"},{m:"Sus-épineux (abduction initiale 0–30°)",n:"5"},
+      {m:"Sous-épineux (rotation externe)",n:"5"},{m:"Sous-scapulaire (rotation interne)",n:"5"},
+      {m:"Grand rond (rotation interne / adduction)",n:"5"},{m:"Grand dorsal (extension / rotation interne)",n:"5"},
+      {m:"Grand pectoral (adduction / rotation interne)",n:"5"},{m:"Biceps brachial (flexion coude / supination)",n:"5"},
+      {m:"Triceps brachial (extension coude)",n:"5"},{m:"Trapèze supérieur (élévation scapulaire)",n:"5"},
+      {m:"Trapèze moyen (rétraction scapulaire)",n:"5"},{m:"Trapèze inférieur (dépression scapulaire)",n:"5"},
+      {m:"Dentelé antérieur (bascule scapulaire)",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion antérieure",n:"180"},{m:"Extension",n:"60"},{m:"Abduction",n:"180"},
+      {m:"Adduction",n:"30"},{m:"Rotation externe (coude au corps)",n:"80"},
+      {m:"Rotation interne (coude au corps)",n:"70"},{m:"Rotation externe (à 90° d'abduction)",n:"90"},
+      {m:"Rotation interne (à 90° d'abduction)",n:"70"},{m:"Élévation dans le plan scapulaire",n:"160"},
+      {m:"Horizontal adduction (cross-body)",n:"—"},
+    ],
+    tests: [
+      {n:"Neer",s:"Conflit sous-acromial",i:"Douleur arc 60–120° = conflit"},
+      {n:"Hawkins-Kennedy",s:"Conflit sous-acromial",i:"RI forcée en flexion 90°"},
+      {n:"Jobe (Empty Can)",s:"Sus-épineux",i:"Faiblesse/douleur = rupture ou tendinopathie"},
+      {n:"Patte",s:"Sous-épineux",i:"RE contrariée coude 90° — rupture post."},
+      {n:"Belly Press / Napoleon",s:"Sous-scapulaire",i:"RI poussée abdomen — rupture ant."},
+      {n:"Bear Hug",s:"Sous-scapulaire sup.",i:"Main épaule contro. résistée"},
+      {n:"Lift Off (Gerber)",s:"Sous-scapulaire",i:"Dorsalgie résistée = rupture"},
+      {n:"Speed",s:"Longue portion biceps",i:"Flexion 60° résistée — douleur gouttière"},
+      {n:"Yergason",s:"Longue portion biceps",i:"Supination résistée coude fléchi 90°"},
+      {n:"O'Brien (SLAP)",s:"Labrum / SLAP",i:"Flexion 90°+ADD+RI puis RE — douleur profonde"},
+      {n:"Sulcus Sign",s:"Instabilité inférieure",i:"Traction axiale vers bas — sulcus > 1cm"},
+      {n:"Appréhension antérieure",s:"Instabilité antérieure",i:"Abd 90°+RE — appréhension patient"},
+      {n:"Relocation (Jobe)",s:"Instabilité antérieure",i:"Pression post. supprime l'appréhension"},
+      {n:"Appréhension postérieure",s:"Instabilité postérieure",i:"Flexion 90°+RI+compression axiale"},
+      {n:"Cross-arm (AC)",s:"Articulation acromio-claviculaire",i:"Adduction horizontale forcée — douleur AC"},
+    ]
+  },
+  coude: {
+    hint: "Coude — épicondylite, instabilité ligamentaire, syndrome canalaire",
+    muscles: [
+      {m:"Biceps brachial (flexion / supination)",n:"5"},{m:"Brachial (flexion pure)",n:"5"},
+      {m:"Brachioradial (flexion prono-neutre)",n:"5"},{m:"Triceps brachial (extension)",n:"5"},
+      {m:"Anconé (extension)",n:"5"},{m:"Supinateur (supination)",n:"5"},
+      {m:"Rond pronateur (pronation)",n:"5"},{m:"Carré pronateur (pronation distale)",n:"5"},
+      {m:"Épicondyliens latéraux (ext. poignet)",n:"5"},{m:"Épicondyliens médiaux (fléch. poignet)",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion",n:"145"},{m:"Extension (0° = neutre)",n:"0"},
+      {m:"Supination",n:"90"},{m:"Pronation",n:"80"},{m:"Recurvatum",n:"0–5"},
+    ],
+    tests: [
+      {n:"Cozen (Mill)",s:"Épicondylite latérale",i:"Extension poignet résistée poing fermé"},
+      {n:"Chair Test",s:"Épicondylite latérale",i:"Soulever chaise en pronation — douleur épicondyle lat."},
+      {n:"Reverse Cozen",s:"Épicondylite médiale",i:"Flexion poignet résistée — douleur épitrochléenne"},
+      {n:"Valgus Stress",s:"LCM",i:"Valgus forcé 30° flexion — douleur/instabilité méd."},
+      {n:"Varus Stress",s:"LCL",i:"Varus forcé 30° flexion — instabilité lat."},
+      {n:"Moving Valgus Stress",s:"LCM",i:"Valgus continu flex→ext — arc douloureux 70–120°"},
+      {n:"Milking Maneuver",s:"LCM postérieur",i:"Traction pouce en valgus — douleur intérieure"},
+      {n:"Tinel au coude",s:"Nerf ulnaire",i:"Percussion gouttière — paresthésies 4e/5e doigt"},
+      {n:"Elbow Flexion Test",s:"Nerf ulnaire",i:"Flexion max 3 min — engourdissements ulnaires"},
+      {n:"Lateral Pivot Shift",s:"LCL-U (instabilité postéro-lat.)",i:"Extension+supination+valgus — subluxation"},
+    ]
+  },
+  poignet: {
+    hint: "Poignet / Main — instabilité scapho-lunaire, canal carpien, de Quervain",
+    muscles: [
+      {m:"Fléchisseur radial du carpe",n:"5"},{m:"Fléchisseur ulnaire du carpe",n:"5"},
+      {m:"Long palmaire",n:"5"},{m:"Extenseur radial long du carpe",n:"5"},
+      {m:"Extenseur radial court du carpe",n:"5"},{m:"Extenseur ulnaire du carpe",n:"5"},
+      {m:"Fléchisseur commun superficiel",n:"5"},{m:"Fléchisseur commun profond",n:"5"},
+      {m:"Long fléchisseur du pouce",n:"5"},{m:"Extenseur commun des doigts",n:"5"},
+      {m:"Court abducteur du pouce (APB)",n:"5"},{m:"Opposant du pouce",n:"5"},
+      {m:"Interosseux (abduction doigts)",n:"5"},{m:"Lombricaux",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion poignet",n:"80"},{m:"Extension poignet",n:"70"},
+      {m:"Inclinaison radiale",n:"20"},{m:"Inclinaison ulnaire",n:"30"},
+      {m:"Pronation",n:"80"},{m:"Supination",n:"90"},
+      {m:"Opposition pouce (score Kapandji)",n:"/10"},
+    ],
+    tests: [
+      {n:"Phalen",s:"Canal carpien / N. médian",i:"Flexion poignet 60 s — paresthésies 1–3e doigt"},
+      {n:"Tinel au poignet",s:"Canal carpien / N. médian",i:"Percussion rétinaculum — paresthésies distales"},
+      {n:"Watson (Scaphoid Shift)",s:"Ligament scapho-lunaire",i:"Pression tubérosité scaphoïde + extension — clunk"},
+      {n:"Ballottement luno-triquétral",s:"Lig. luno-triquétral",i:"Cisaillement — douleur/crépitation"},
+      {n:"TFCC Compression",s:"TFCC",i:"Compression + rotation — douleur ulnaire"},
+      {n:"Grind Test pouce",s:"Trapèzo-métacarpienne",i:"Compression + rotation 1er MC — douleur/crépitations"},
+      {n:"Finkelstein",s:"De Quervain (APL / EPB)",i:"Pouce replié + inclinaison ulnaire — douleur styloïde"},
+      {n:"Eichoff",s:"De Quervain",i:"Variante Finkelstein poing fermé"},
+      {n:"Allen Test",s:"Artères radiale / ulnaire",i:"Compression + ouverture main — reperfusion < 5 s"},
+    ]
+  },
+  hanche: {
+    hint: "Hanche — post-op PTH, conflit fémoro-acétabulaire, coxarthrose",
+    muscles: [
+      {m:"Psoas-iliaque (flexion hanche)",n:"5"},{m:"Droit fémoral (flex. hanche + ext. genou)",n:"5"},
+      {m:"Grand fessier (extension hanche)",n:"5"},{m:"Moyen fessier (abduction / stabilisation)",n:"5"},
+      {m:"Petit fessier (abduction)",n:"5"},{m:"Tenseur fascia lata",n:"5"},
+      {m:"Adducteurs (court, long, grand)",n:"5"},{m:"Piriforme (rotation externe)",n:"5"},
+      {m:"Obturateurs / Jumeaux (rotation ext.)",n:"5"},{m:"Ischio-jambiers (extension hanche)",n:"5"},
+      {m:"Sartorius",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion hanche (genou fléchi)",n:"120"},{m:"Flexion hanche (genou tendu — IJ)",n:"90"},
+      {m:"Extension",n:"20"},{m:"Abduction",n:"45"},{m:"Adduction",n:"30"},
+      {m:"Rotation interne",n:"35"},{m:"Rotation externe",n:"45"},
+    ],
+    tests: [
+      {n:"Thomas",s:"Psoas / flexum de hanche",i:"DL — jambe contro. fléchie — flexum homolatéral"},
+      {n:"FABER (Patrick)",s:"Hanche / sacro-iliaque",i:"Flexion-ABD-RE — genou en hauteur anormale"},
+      {n:"FADIR",s:"Conflit fémoro-acétabulaire (FAI)",i:"Flexion 90°+ADD+RI — douleur inguinale"},
+      {n:"Impingement antérieur",s:"FAI / labrum antérieur",i:"Flexion 90°+RI — douleur antérieure"},
+      {n:"Trendelenburg",s:"Moyen fessier",i:"Appui unipodal — abaissement bassin controlatéral"},
+      {n:"Ober",s:"TFL / Bandelette ilio-tibiale",i:"DL — abduction passive + chute en adduction"},
+      {n:"Lasègue",s:"Nerf sciatique / hernie lombaire",i:"Extension genou jambe levée — douleur < 60°"},
+      {n:"Lasègue controlatéral",s:"Hernie médiane",i:"Jambe saine levée — douleur côté symptomatique"},
+      {n:"Freiberg",s:"Syndrome du piriforme",i:"RI passive hanche en extension — douleur fessière"},
+      {n:"Beatty",s:"Syndrome du piriforme",i:"DL — abduction résistée — douleur fessière profonde"},
+      {n:"Gaenslen",s:"Sacro-iliaque",i:"Extension hanche hors de table — douleur SI"},
+      {n:"Compression SI",s:"Sacro-iliaque",i:"DL — compression ilium — douleur SI"},
+    ]
+  },
+  genou: {
+    hint: "Genou — post-op LCA, ménisques, PTG, tendinopathie rotulienne",
+    muscles: [
+      {m:"Quadriceps — vaste médial (VMO)",n:"5"},{m:"Quadriceps — vaste latéral",n:"5"},
+      {m:"Quadriceps — droit fémoral",n:"5"},{m:"Ischio-jambiers médiaux (ST/SM)",n:"5"},
+      {m:"Ischio-jambiers latéraux (biceps fémoral)",n:"5"},{m:"Gastrocnémiens",n:"5"},
+      {m:"Poplité (rotation interne tibia)",n:"5"},{m:"Gracile",n:"5"},{m:"Sartorius",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion active",n:"140"},{m:"Flexion passive",n:"145"},
+      {m:"Extension (0° = neutre)",n:"0"},{m:"Recurvatum (hyperextension)",n:"0–5"},
+      {m:"Rotation interne (genou fléchi 90°)",n:"30"},{m:"Rotation externe (genou fléchi 90°)",n:"40"},
+    ],
+    tests: [
+      {n:"Lachman",s:"LCA",i:"Tiroir antérieur 20–30° flexion — translation/molle"},
+      {n:"Tiroir antérieur",s:"LCA",i:"Genou 90° — translation tibia vers l'avant"},
+      {n:"Pivot Shift",s:"LCA (instabilité rotatoire)",i:"Extension+RI+valgus — subluxation plateau lat."},
+      {n:"Tiroir postérieur",s:"LCP",i:"Genou 90° — translation tibia vers l'arrière"},
+      {n:"Sag Sign",s:"LCP",i:"DL genoux 90° — affaissement tibial spontané"},
+      {n:"Valgus Stress",s:"LCM",i:"Extension et 30° flexion — douleur/écartement méd."},
+      {n:"Varus Stress",s:"LCL",i:"Extension et 30° flexion — douleur/écartement lat."},
+      {n:"McMurray",s:"Ménisques",i:"Flexion→extension+RI/RE — clunk douloureux"},
+      {n:"Apley",s:"Ménisques",i:"DV genou 90° — compression+rotation — douleur"},
+      {n:"Thessaly",s:"Ménisques",i:"Appui unipodal 20° flexion — rotation — douleur"},
+      {n:"Clarke (rotule)",s:"Syndrome fémoro-patellaire",i:"Pression rotule + contraction quadriceps — douleur"},
+      {n:"Appréhension rotulienne",s:"Instabilité rotulienne",i:"Pression rotule en latéral — appréhension"},
+      {n:"Noble Compression",s:"Bandelette ilio-tibiale",i:"Pression 3 cm au-dessus interligne lat. à 30° flexion"},
+      {n:"Dial Test",s:"Coin postéro-latéral / LCP",i:"DV — RE tibiale à 30° et 90° — asymétrie > 10°"},
+    ]
+  },
+  cheville: {
+    hint: "Cheville / Pied — entorse latérale, tendon Achille, fasciite plantaire",
+    muscles: [
+      {m:"Tibial antérieur (flexion dorsale / supination)",n:"5"},{m:"Long extenseur des orteils",n:"5"},
+      {m:"Long extenseur de l'hallux",n:"5"},{m:"Long fibulaire (éversion / FP)",n:"5"},
+      {m:"Court fibulaire (éversion)",n:"5"},{m:"Tibial postérieur (inversion / FP)",n:"5"},
+      {m:"Soléaire (FP genou fléchi)",n:"5"},{m:"Gastrocnémien médial",n:"5"},
+      {m:"Gastrocnémien latéral",n:"5"},{m:"Long fléchisseur des orteils",n:"5"},
+      {m:"Long fléchisseur de l'hallux",n:"5"},{m:"Court fléchisseur plantaire",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion dorsale (genou tendu)",n:"20"},{m:"Flexion dorsale (genou fléchi)",n:"30"},
+      {m:"Flexion plantaire",n:"50"},{m:"Inversion (supination)",n:"35"},
+      {m:"Éversion (pronation)",n:"15"},{m:"Flexion hallux (MTP)",n:"70"},
+      {m:"Extension hallux (MTP)",n:"40"},
+    ],
+    tests: [
+      {n:"Tiroir antérieur cheville",s:"LTFA",i:"Pied en légère FP — translation talus — > 3 mm"},
+      {n:"Tilt talien (varus forcé)",s:"LTFA + LCF",i:"Inclinaison talus en varus — > 10° ou asymétrie > 5°"},
+      {n:"Squeeze Test fibula",s:"Syndesmose tibio-fibulaire",i:"Compression fibula milieu jambe — douleur distale"},
+      {n:"External Rotation Stress",s:"Syndesmose",i:"RE pied genou 90° — douleur syndesmose"},
+      {n:"Thompson",s:"Tendon d'Achille (rupture)",i:"DV — compression mollet — absence FP = rupture"},
+      {n:"Matles",s:"Tendon d'Achille",i:"DV genoux fléchis 90° — pied tombe en FD"},
+      {n:"Windlass Test",s:"Fascia plantaire",i:"Extension hallux passive — douleur tubérosité calcanéum"},
+      {n:"Tinel tunnel tarsien",s:"Nerf tibial postérieur",i:"Percussion gouttière méd. — paresthésies plantaires"},
+      {n:"Mulder",s:"Névrome de Morton",i:"Compression métatarses + pression lat. — clunk douloureux"},
+    ]
+  },
+  cervical: {
+    hint: "Rachis cervical — cervicalgie, névralgie cervico-brachiale, whiplash",
+    muscles: [
+      {m:"Sterno-cléido-mastoïdien",n:"5"},{m:"Scalènes",n:"5"},{m:"Splénius",n:"5"},
+      {m:"Semi-épineux de la tête",n:"5"},{m:"Trapèze supérieur",n:"5"},
+      {m:"Élévateur de la scapula",n:"5"},{m:"Sous-occipitaux",n:"5"},
+      {m:"Fléchisseurs profonds du cou",n:"5"},{m:"Deltoïde C5 (radiculaire)",n:"5"},
+      {m:"Biceps C5-C6 (radiculaire)",n:"5"},{m:"Extenseurs poignet C6 (radiculaire)",n:"5"},
+      {m:"Triceps C7 (radiculaire)",n:"5"},{m:"Fléchisseurs doigts C8 (radiculaire)",n:"5"},
+      {m:"Interosseux T1 (radiculaire)",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion",n:"45"},{m:"Extension",n:"45"},{m:"Inclinaison droite",n:"45"},
+      {m:"Inclinaison gauche",n:"45"},{m:"Rotation droite",n:"80"},{m:"Rotation gauche",n:"80"},
+    ],
+    tests: [
+      {n:"Spurling",s:"Foramen / racine nerveuse",i:"Inclinaison + compression axiale — reproduction névralgie"},
+      {n:"Distraction cervicale",s:"Compression radiculaire",i:"Traction axiale — soulagement = positif"},
+      {n:"ULTT1 (médian)",s:"Nerf médian / C6",i:"Dépression scap+ABD+RE+ext. coude+ext. poignet"},
+      {n:"ULTT2b (radial)",s:"Nerf radial / C6",i:"Dépression+ABD+RI+flexion poignet/doigts"},
+      {n:"ULTT3 (ulnaire)",s:"Nerf ulnaire / C8-T1",i:"Dépression+ABD+RE+flexion coude+ext. poignet"},
+      {n:"Lhermitte",s:"Moelle épinière / myélopathie",i:"Flexion cervicale — décharge électrique membres"},
+      {n:"Hoffmann",s:"Myélopathie cervicale",i:"Chiquenaude sur M3 — flexion réflexe pouce = positif"},
+      {n:"Valsalva cervical",s:"Hernie discale",i:"Effort de Valsalva — reproduction radiculalgie"},
+      {n:"Sharp-Purser",s:"Instabilité C1-C2",i:"Flexion + pression post. front — réduction subluxation"},
+      {n:"FRT (atlas C0-C1)",s:"Articulation C0-C1",i:"Flexion max + rotation — limitation unilatérale"},
+      {n:"Test artère vertébrale",s:"Artère vertébrale (précaution!)",i:"Extension+rotation — vertiges/nystagmus = STOP"},
+    ]
+  },
+  lombaire: {
+    hint: "Rachis lombaire — lombalgie, hernie discale, sténose canalaire",
+    muscles: [
+      {m:"Érecteurs du rachis",n:"5"},{m:"Multifides lombaires",n:"5"},
+      {m:"Carré des lombes",n:"5"},{m:"Transverse de l'abdomen",n:"5"},
+      {m:"Grand droit de l'abdomen",n:"5"},{m:"Obliques internes / externes",n:"5"},
+      {m:"Psoas-iliaque",n:"5"},{m:"Grand fessier (extension hanche)",n:"5"},
+      {m:"Ischio-jambiers",n:"5"},{m:"Extenseurs hallux L5 (radiculaire)",n:"5"},
+      {m:"Flexion plantaire S1 (radiculaire)",n:"5"},{m:"Quadriceps L3-L4 (radiculaire)",n:"5"},
+    ],
+    amplitudes: [
+      {m:"Flexion (distance doigts-sol / Schober)",n:"< 10 cm / +5 cm"},{m:"Extension",n:"25"},
+      {m:"Inclinaison droite",n:"25"},{m:"Inclinaison gauche",n:"25"},
+      {m:"Rotation droite (assis)",n:"30"},{m:"Rotation gauche (assis)",n:"30"},
+    ],
+    tests: [
+      {n:"Lasègue",s:"Nerf sciatique / L4-L5-S1",i:"Extension genou jambe levée DL — douleur < 60° = positif"},
+      {n:"Lasègue controlatéral",s:"Hernie médiane",i:"Jambe saine levée — douleur côté symptomatique"},
+      {n:"Slump Test",s:"Tension dure-mérienne",i:"Flexion rachis+ext. genou+FD cheville — irradiation"},
+      {n:"Femoral Nerve Stretch",s:"Nerf fémoral / L2-L3-L4",i:"DV — ext. hanche+flex. genou — douleur ant. cuisse"},
+      {n:"Valsalva lombaire",s:"Pression intradiscale",i:"Effort de Valsalva — reproduction radiculalgie"},
+      {n:"Gaenslen",s:"Sacro-iliaque",i:"Extension hanche hors table DL — douleur SI"},
+      {n:"FABER lombaire",s:"Sacro-iliaque",i:"Flexion-ABD-RE hanche — douleur SI homolatérale"},
+      {n:"Compression SI",s:"Sacro-iliaque",i:"DL compression ilium vers bas — douleur SI"},
+      {n:"Distraction SI",s:"Sacro-iliaque",i:"DD compression ailes iliaques vers ext. — douleur SI"},
+      {n:"Prone Instability Test",s:"Instabilité segmentaire",i:"DV pieds sol — pression vertébrale diminue actif"},
+      {n:"Waddell",s:"Composante psychosociale",i:"≥ 3/5 signes = composante non organique probable"},
+    ]
+  }
+};
+
+// ===== LOAD ARTICULATION =====
+function loadArticulation(){
+  const art = document.getElementById('articu-select').value;
+  if(!art) return;
+  const data = DB[art];
+  if(!data) return;
+  const hint = document.getElementById('articu-hint');
+  hint.textContent = '💡 ' + data.hint;
+  hint.style.display = 'block';
+  const hasMuscle = document.getElementById('muscle-tbody').children.length > 0;
+  const hasArticular = document.getElementById('articular-tbody').children.length > 0;
+  const hasSpecific = document.getElementById('specific-tbody').children.length > 0;
+  const label = document.getElementById('articu-select').options[document.getElementById('articu-select').selectedIndex].text;
+  if((hasMuscle||hasArticular||hasSpecific) && !confirm('Remplacer les données actuelles par : ' + label + ' ?')) return;
+  document.getElementById('muscle-tbody').innerHTML='';
+  data.muscles.forEach(r => addMuscleRow(r));
+  document.getElementById('articular-tbody').innerHTML='';
+  data.amplitudes.forEach(r => addArticularRow(r));
+  document.getElementById('specific-tbody').innerHTML='';
+  data.tests.forEach(r => addSpecificRow(r));
+}
+
+// ===== FONCTIONS LIGNES =====
+const mmtOptions=['','0','1','2','3','4','5'];
+
+function addMuscleRow(data={}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input value="${data.m||''}" placeholder="Muscle…" style="width:100%"></td>
+    <td style="text-align:center"><select>${mmtOptions.map(o=>`<option${o===(data.d||'')?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td style="text-align:center"><select>${mmtOptions.map(o=>`<option${o===(data.g||'')?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td style="text-align:center"><select>${mmtOptions.map(o=>`<option${o===(data.r||'')?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><input value="${data.obs||''}" placeholder="Notes…" style="width:100%"></td>
+    <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:13px;padding:2px 4px">✕</button></td>
+  `;
+  document.getElementById('muscle-tbody').appendChild(tr);
+}
+
+function addArticularRow(data={}){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input value="${data.m||''}" placeholder="Mouvement…" style="width:100%"></td>
+    <td><input value="${data.d||''}" type="number" min="0" max="360" style="width:100%;text-align:center"></td>
+    <td><input value="${data.g||''}" type="number" min="0" max="360" style="width:100%;text-align:center"></td>
+    <td><input value="${data.n||''}" placeholder="—" style="width:100%;text-align:center;color:var(--text-muted);font-size:11px" readonly></td>
+    <td style="text-align:center"><select><option>—</option><option>Non</option><option>Oui</option></select></td>
+    <td><input value="${data.obs||''}" placeholder="Notes…" style="width:100%"></td>
+    <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:13px;padding:2px 4px">✕</button></td>
+  `;
+  document.getElementById('articular-tbody').appendChild(tr);
+}
+
+function addSpecificRow(data={}){
+  const res=data.r||'';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td style="display:flex;align-items:center;gap:4px">
+      <input value="${data.n||''}" placeholder="Nom du test…" style="flex:1;min-width:0">
+      <button onclick="openYoutube(this.closest('td').querySelector('input').value)" title="Voir le test sur YouTube" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px;flex-shrink:0" tabindex="-1">🎬</button>
+    </td>
+    <td><input value="${data.s||''}" placeholder="Structure…" style="width:100%;font-size:11px;color:var(--text-muted)"></td>
+    <td style="text-align:center">
+      <select class="result-sel" style="font-weight:600">
+        <option value="">—</option>
+        <option value="Négatif"${res==='Négatif'?' selected':''}>Négatif</option>
+        <option value="Positif"${res==='Positif'?' selected':''}>Positif</option>
+        <option value="Douteux"${res==='Douteux'?' selected':''}>Douteux</option>
+        <option value="NR"${res==='NR'?' selected':''}>Non réalisé</option>
+      </select>
+    </td>
+    <td><input value="${data.i||''}" placeholder="${data.i||'Interprétation…'}" style="width:100%;font-size:11px"></td>
+    <td><button onclick="this.closest('tr').remove()" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:13px;padding:2px 4px">✕</button></td>
+  `;
+  const sel = tr.querySelector('.result-sel');
+  const colorSel = s => { s.style.color = s.value==='Positif'?'#c03020':s.value==='Négatif'?'#27ae60':s.value==='Douteux'?'#f39c12':'var(--text)'; };
+  colorSel(sel);
+  sel.addEventListener('change', ()=>colorSel(sel));
+  if(res) colorSel(sel);
+  document.getElementById('specific-tbody').appendChild(tr);
+}
+
+// ===== CALCUL RATIO AMPLITUDE =====
+function calcAmplitudeRatios(){
+  document.querySelectorAll('#articular-tbody tr').forEach(tr=>{
+    const inputs = tr.querySelectorAll('input[type="number"]');
+    if(inputs.length < 2) return;
+    const d = parseFloat(inputs[0].value);
+    const g = parseFloat(inputs[1].value);
+    const normInput = tr.querySelectorAll('input')[3];
+    const norm = normInput ? parseFloat(normInput.value) : NaN;
+    let ratioCell = tr.querySelector('.ratio-cell');
+    if(!ratioCell){
+      const td = document.createElement('td');
+      td.className = 'ratio-cell';
+      td.style = 'text-align:center;font-size:11px;font-weight:600';
+      const lastTd = tr.querySelector('td:last-child');
+      tr.insertBefore(td, lastTd);
+      ratioCell = td;
+    }
+    if(!isNaN(d) && !isNaN(g) && (d>0||g>0)){
+      const max=Math.max(d,g), min=Math.min(d,g);
+      const asym = max>0 ? Math.round((1-min/max)*100) : 0;
+      const side = d>=g ? 'D dom.' : 'G dom.';
+      const color = asym<=10?'#27ae60':asym<=20?'#f39c12':'#c03020';
+      let normText = '';
+      if(!isNaN(norm) && norm>0){
+        const bestPct = Math.round(Math.max(d,g)/norm*100);
+        normText = ` | ${bestPct}% N`;
+      }
+      ratioCell.innerHTML = `<span style="color:${color}">${asym}% asym.</span><br><span style="font-size:10px;color:var(--text-muted)">${side}${normText}</span>`;
+    } else {
+      if(ratioCell) ratioCell.textContent = '—';
+    }
+  });
+}
+
+document.addEventListener('input', e => {
+  if(e.target.closest('#articular-tbody')) calcAmplitudeRatios();
+  if(e.target.closest('#vald-tbody')) updateValdChart();
+});
+
+// ===== PARSER TEXTE VALD HUB =====
+function parseValdText(){
+  const raw = document.getElementById('vald-paste-input').value.trim();
+  if(!raw){ showValdStatus('⚠️ Collez d\'abord le texte copié depuis VALD Hub.', 'warning'); return; }
+
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const rows = [];
+  let currentTest = null;
+
+  // Détecter la date et l'appareil
+  for(let i=0; i<lines.length; i++){
+    const line = lines[i];
+
+    // Nouvelle ligne de test (pas "Date:", "DynaMo", "Max Force", "Avg", "Asymmetry seule")
+    const isMetric = /Max Force|Avg Force|Impulse|Asymmetry|Peak/i.test(line);
+    const isMeta = /^Date:|^DynaMo|^ForceDecks|^NordBord/i.test(line);
+
+    if(!isMetric && !isMeta && line.length > 3){
+      currentTest = line;
+      continue;
+    }
+
+    // Parser une ligne de métrique
+    // Format: "Max Force (N): Left 308 Right 276 Asymmetry 10% Left"
+    // Format: "Max Force (N): Left 308 Right 276"
+    if(isMetric && currentTest){
+      const unitMatch = line.match(/\(([^)]+)\)/);
+      const unit = unitMatch ? unitMatch[1] : 'N';
+
+      const leftMatch = line.match(/Left\s+([\d.]+)/i);
+      const rightMatch = line.match(/Right\s+([\d.]+)/i);
+      const asymMatch = line.match(/Asymmetry\s+([\d.]+)%\s*(Left|Right)?/i);
+
+      if(leftMatch || rightMatch){
+        const leftVal = leftMatch ? parseFloat(leftMatch[1]) : null;
+        const rightVal = rightMatch ? parseFloat(rightMatch[1]) : null;
+        const asymVal = asymMatch ? parseFloat(asymMatch[1]) : null;
+        const asymSide = asymMatch && asymMatch[2] ? asymMatch[2] : null;
+
+        // Calculer asym si pas fourni
+        let asym = asymVal;
+        if(asym===null && leftVal!==null && rightVal!==null){
+          const max=Math.max(leftVal,rightVal), min=Math.min(leftVal,rightVal);
+          asym = max>0 ? Math.round((1-min/max)*100) : 0;
+        }
+
+        // Nom lisible du métrique
+        const metricName = line.replace(/\([^)]+\).*/,'').replace(/Max Force|Avg Force|Peak|Impulse/gi, m=>m).trim();
+        const label = currentTest + (lines.filter(l=>/Max Force|Avg Force/i.test(l)).length>1 ? ' — '+metricName:'');
+
+        rows.push({
+          m: currentTest,
+          g: leftVal!==null ? leftVal.toString() : '',
+          d: rightVal!==null ? rightVal.toString() : '',
+          u: unit,
+          asym: asym,
+          asymSide: asymSide,
+          ratio: ''
+        });
+      }
+    }
+  }
+
+  if(rows.length === 0){
+    showValdStatus('⚠️ Format non reconnu. Vérifiez que vous avez copié depuis Hub → Timeline → Copy.', 'warning');
+    return;
+  }
+
+  // Remplir le tableau
+  document.getElementById('vald-tbody').innerHTML = '';
+  rows.forEach(r => addValdRow(r));
+  showValdStatus(`✅ ${rows.length} test(s) importé(s) avec succès.`, 'success');
+  document.getElementById('vald-paste-input').value = '';
+}
+
+// ===== VALD ROWS =====
+let valdChart = null;
+
+function addValdRow(data={}){
+  const tr = document.createElement('tr');
+  // Calculer asymétrie affichée
+  const dv = parseFloat(data.d)||0;
+  const gv = parseFloat(data.g)||0;
+  let asymDisplay = '—';
+  let asymColor = 'var(--text-muted)';
+  if(data.asym !== undefined && data.asym !== null){
+    const a = parseFloat(data.asym);
+    asymColor = a<=10?'#27ae60':a<=20?'#f39c12':'#c03020';
+    const side = data.asymSide ? data.asymSide : (gv>=dv?'G':'D');
+    asymDisplay = `<span style="color:${asymColor};font-weight:600">${a}%</span><br><span style="font-size:10px;color:#aaa">${side} dom.</span>`;
+  } else if(dv>0 || gv>0){
+    const max=Math.max(dv,gv), min=Math.min(dv,gv);
+    const a = max>0?Math.round((1-min/max)*100):0;
+    asymColor = a<=10?'#27ae60':a<=20?'#f39c12':'#c03020';
+    asymDisplay = `<span style="color:${asymColor};font-weight:600">${a}%</span>`;
+  }
+
+  tr.innerHTML = `
+    <td><input value="${data.m||''}" placeholder="Test…" style="width:100%"></td>
+    <td><input value="${data.g||''}" type="number" min="0" step="0.1" style="width:100%;text-align:center"></td>
+    <td><input value="${data.d||''}" type="number" min="0" step="0.1" style="width:100%;text-align:center"></td>
+    <td><select style="width:100%">
+      <option${(data.u||'N')==='N'?' selected':''}>N</option>
+      <option${(data.u||'')==='kg'?' selected':''}>kg</option>
+      <option${(data.u||'')==='%PC'?' selected':''}>%PC</option>
+    </select></td>
+    <td class="vald-asym" style="text-align:center;font-size:11px">${asymDisplay}</td>
+    <td><input value="${data.ratio||''}" placeholder="ex: 0.60" style="width:100%;text-align:center;font-size:12px"></td>
+    <td><input value="${data.ref||''}" placeholder="norme" style="width:100%;text-align:center;font-size:11px"></td>
+    <td><button onclick="this.closest('tr').remove();updateValdChart()" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:13px;padding:2px 4px">✕</button></td>
+  `;
+  document.getElementById('vald-tbody').appendChild(tr);
+  setTimeout(updateValdChart, 50);
+}
+
+function updateValdChart(){
+  // Recalculer asymétries en live
+  document.querySelectorAll('#vald-tbody tr').forEach(tr=>{
+    const inps = tr.querySelectorAll('input[type="number"]');
+    const g = parseFloat(inps[0]?.value)||0;
+    const d = parseFloat(inps[1]?.value)||0;
+    const cell = tr.querySelector('.vald-asym');
+    if(cell && (d>0||g>0)){
+      const max=Math.max(d,g), min=Math.min(d,g);
+      const a = max>0?Math.round((1-min/max)*100):0;
+      const side = g>=d?'G':'D';
+      const color = a<=10?'#27ae60':a<=20?'#f39c12':'#c03020';
+      cell.innerHTML = `<span style="color:${color};font-weight:600">${a}%</span><br><span style="font-size:10px;color:#aaa">${side} dom.</span>`;
+    }
+  });
+
+  const rows = [...document.querySelectorAll('#vald-tbody tr')];
+  const labels=[], dataG=[], dataD=[], dataRef=[];
+  rows.forEach(tr=>{
+    const inps = tr.querySelectorAll('input');
+    const m = inps[0]?.value; if(!m) return;
+    labels.push(m.length>22 ? m.substring(0,22)+'…' : m);
+    dataG.push(parseFloat(inps[1]?.value)||0);
+    dataD.push(parseFloat(inps[2]?.value)||0);
+    dataRef.push(parseFloat(inps[4]?.value)||null);
+  });
+
+  if(!labels.length){ document.getElementById('vald-chart-container').style.display='none'; return; }
+  document.getElementById('vald-chart-container').style.display='block';
+
+  const ctx = document.getElementById('vald-chart').getContext('2d');
+  if(valdChart) valdChart.destroy();
+
+  const datasets = [
+    { label:'Gauche', data:dataG, backgroundColor:'rgba(201,146,42,0.85)', borderRadius:5, borderSkipped:false },
+    { label:'Droite', data:dataD, backgroundColor:'rgba(26,46,74,0.85)', borderRadius:5, borderSkipped:false },
+  ];
+  if(dataRef.some(v=>v)){
+    datasets.push({ label:'Norme', data:dataRef, backgroundColor:'rgba(180,180,180,0.35)', borderRadius:5, borderSkipped:false, borderWidth:1.5, borderColor:'#bbb' });
+  }
+
+  valdChart = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ position:'top', labels:{ font:{size:11,family:'Segoe UI,system-ui,sans-serif'}, boxWidth:14, padding:16 } },
+        tooltip:{
+          callbacks:{
+            label: c => ` ${c.dataset.label}: ${c.raw} ${document.querySelector('#vald-tbody tr td:nth-child(4) select')?.value||'N'}`
+          }
+        }
+      },
+      scales:{
+        y:{ beginAtZero:true, ticks:{font:{size:10}}, grid:{color:'rgba(0,0,0,0.04)'} },
+        x:{ ticks:{font:{size:10},maxRotation:30} }
+      }
+    }
+  });
+}
+
+// ===== ANALYSE VALD PAR PHOTO (IA) =====
+function analyzeValdImage(event){
+  const file = event.target.files[0];
+  if(file) processValdFile(file);
+  event.target.value='';
+}
+
+async function processValdFile(file){
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const imgEl = document.getElementById('vald-preview-img');
+    imgEl.src = e.target.result;
+    imgEl.style.display = 'block';
+    showValdStatus('🔍 Analyse de la capture en cours…', 'info');
+
+    try {
+      const base64 = e.target.result.split(',')[1];
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:800,
+          messages:[{
+            role:'user',
+            content:[
+              { type:'image', source:{ type:'base64', media_type:file.type, data:base64 } },
+              { type:'text', text:`Analyse cette capture d'écran de l'application VALD DynaMo.
+Extrait toutes les valeurs de force visibles.
+Réponds UNIQUEMENT en JSON valide, sans texte ni backticks.
+Format attendu:
+{"rows":[{"m":"nom du test","g":valeur_gauche_ou_null,"d":valeur_droite_ou_null,"u":"N","asym":valeur_asymétrie_ou_null,"asymSide":"Left ou Right ou null"}]}
+Si une valeur n'est pas lisible, mets null.` }
+            ]
+          }]
+        })
+      });
+      const data = await resp.json();
+      let text = (data.content||[]).map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(text);
+      if(parsed.rows?.length){
+        document.getElementById('vald-tbody').innerHTML='';
+        parsed.rows.forEach(r=>addValdRow(r));
+        showValdStatus(`✅ ${parsed.rows.length} valeur(s) extraite(s) depuis la photo.`, 'success');
+      } else {
+        showValdStatus('⚠️ Aucune valeur détectée — saisissez manuellement.', 'warning');
+      }
+    } catch(err){
+      showValdStatus('⚠️ Extraction impossible — saisissez manuellement. (' + err.message + ')', 'warning');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function showValdStatus(msg, type='info'){
+  const box = document.getElementById('vald-status');
+  const text = document.getElementById('vald-status-text');
+  box.style.display='block';
+  box.style.background = type==='success'?'rgba(39,174,96,0.08)':type==='warning'?'rgba(243,156,18,0.08)':'var(--bg)';
+  box.style.borderColor = type==='success'?'#27ae60':type==='warning'?'#f39c12':'var(--border)';
+  text.textContent = msg;
+  if(type==='success') setTimeout(()=>box.style.display='none', 4000);
+}
+
+// ===== LIENS YOUTUBE TESTS =====
+function openYoutube(testName){
+  if(!testName||!testName.trim()){ alert('Saisissez d\'abord le nom du test.'); return; }
+  const query = encodeURIComponent('test clinique kinésithérapie ' + testName);
+  window.open('https://www.youtube.com/results?search_query=' + query, '_blank');
+}
+
+// ===== OBJECTIFS =====
+function addObj(listId,val=''){
+  const list=document.getElementById(listId);
+  const n=list.children.length+1;
+  const div=document.createElement('div');
+  div.className='obj-item';
+  div.innerHTML=`<div class="obj-num">${n}</div><input class="obj-input" value="${val}" placeholder="Décrire l'objectif…">`;
+  list.appendChild(div);
+}
+addObj('obj-court');addObj('obj-moyen');addObj('obj-long');
+
+// ===== CANVAS =====
+const canvas=document.getElementById('body-canvas');
+const ctx=canvas.getContext('2d');
+let drawing=false,currentColor='#e74c3c',brushSize=6,tool='draw';
+let lastX=0,lastY=0;
+
+// Adapter le canvas à la taille de l'image de fond
+function resizeCanvas(){
+  const img = document.getElementById('body-bg-img');
+  if(!img.complete || !img.naturalWidth) return;
+  canvas.width = img.offsetWidth;
+  canvas.height = img.offsetHeight;
+}
+window.addEventListener('resize', ()=>{ resizeCanvas(); });
+document.getElementById('body-bg-img').addEventListener('load', resizeCanvas);
+// Init au chargement de la page
+setTimeout(resizeCanvas, 200);
+
+function clearCanvas(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+// Drawing
+function getPos(e){
+  const r=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/r.width;
+  const scaleY=canvas.height/r.height;
+  if(e.touches){
+    return{x:(e.touches[0].clientX-r.left)*scaleX,y:(e.touches[0].clientY-r.top)*scaleY};
+  }
+  return{x:(e.clientX-r.left)*scaleX,y:(e.clientY-r.top)*scaleY};
+}
+canvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);lastX=p.x;lastY=p.y;});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);lastX=p.x;lastY=p.y;},{passive:false});
+canvas.addEventListener('mousemove',e=>{if(!drawing)return;draw(e);});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;draw(e);},{passive:false});
+canvas.addEventListener('mouseup',()=>drawing=false);
+canvas.addEventListener('touchend',()=>drawing=false);
+
+function draw(e){
+  const p=getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX,lastY);
+  ctx.lineTo(p.x,p.y);
+  if(tool==='erase'){
+    ctx.strokeStyle='#f9f8f5';
+    ctx.lineWidth=brushSize*3;
+  }else{
+    ctx.strokeStyle=currentColor;
+    ctx.lineWidth=brushSize;
+    ctx.globalAlpha=0.75;
+  }
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.stroke();
+  ctx.globalAlpha=1;
+  lastX=p.x;lastY=p.y;
+}
+
+function setColor(btn,color){
+  document.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');currentColor=color;
+}
+function setTool(t){
+  tool=t;
+  document.getElementById('tool-draw').classList.toggle('active',t==='draw');
+  document.getElementById('tool-erase').classList.toggle('active',t==='erase');
+}
+function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
+document.getElementById('brush-size').addEventListener('input',e=>brushSize=parseInt(e.target.value));
+
+// ===== COLLECT DATA =====
+function collectData(){
+  const getRadio=name=>{const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:'';};
+  const getChecks=name=>[...document.querySelectorAll(`input[name="${name}"]:checked`)].map(el=>el.value);
+  const getObjs=id=>[...document.getElementById(id).querySelectorAll('input')].map(i=>i.value).filter(Boolean);
+  const getMuscleRows=()=>[...document.getElementById('muscle-tbody').querySelectorAll('tr')].map(tr=>{
+    const inp=tr.querySelectorAll('input');const sel=tr.querySelectorAll('select');
+    return{m:inp[0]?.value,d:sel[0]?.value,g:sel[1]?.value,r:sel[2]?.value,obs:inp[1]?.value};
+  });
+  const getArticularRows=()=>[...document.getElementById('articular-tbody').querySelectorAll('tr')].map(tr=>{
+    const inp=tr.querySelectorAll('input');const sel=tr.querySelectorAll('select');
+    return{m:inp[0]?.value,d:inp[1]?.value,g:inp[2]?.value,n:inp[3]?.value,doul:sel[0]?.value,obs:inp[4]?.value};
+  });
+  const getSpecificRows=()=>[...document.getElementById('specific-tbody').querySelectorAll('tr')].map(tr=>{
+    const inp=tr.querySelectorAll('input');const sel=tr.querySelectorAll('select');
+    return{n:inp[0]?.value,s:inp[1]?.value,r:sel[0]?.value,i:inp[2]?.value};
+  });
+
+  return{
+    nom:v('nom'),prenom:v('prenom'),ddn:v('ddn'),profession:v('profession'),
+    dominance:v('dominance'),dateBilan:v('date-bilan'),
+    motifType:v('motif-type'),region:v('region'),motifDesc:v('motif-desc'),
+    medecin:v('medecin'),dateOrdo:v('date-ordo'),
+    histoire:v('histoire'),aggravants:v('aggravants'),soulageants:v('soulageants'),traitements:v('traitements'),
+    atcdMed:v('atcd-med'),atcdChir:v('atcd-chir'),atcdTrauma:v('atcd-trauma'),
+    medicaments:v('medicaments'),allergies:v('allergies'),
+    activite:getRadio('activite'),sport:v('sport'),contextePro:v('contexte-pro'),
+    muscleRows:getMuscleRows(),articularRows:getArticularRows(),specificRows:getSpecificRows(),
+    articulationSelect:v('articu-select'),testingObs:v('testing-obs'),
+    painRest:getPainVal('pain-rest'),painEffort:getPainVal('pain-effort'),painMax:getPainVal('pain-max'),
+    painType:getRadio('pain-type'),painChar:getRadio('pain-char'),painDesc:v('pain-desc'),
+    scaleDash:v('scale-dash'),scaleQuickdash:v('scale-quickdash'),scaleIkdc:v('scale-ikdc'),
+    scaleKoos:v('scale-koos'),scaleHoos:v('scale-hoos'),scaleConstant:v('scale-constant'),
+    scaleAses:v('scale-ases'),scaleOswestry:v('scale-oswestry'),
+    scaleAutreNom:v('scale-autre-nom'),scaleAutreVal:v('scale-autre-val'),
+    foncObs:v('fonc-obs'),
+    schemaNotes:v('schema-notes'),
+    canvasData:(()=>{
+      const bgImg = document.getElementById('body-bg-img');
+      const merge = document.createElement('canvas');
+      merge.width = canvas.width; merge.height = canvas.height;
+      const mctx = merge.getContext('2d');
+      mctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      mctx.drawImage(canvas, 0, 0);
+      return merge.toDataURL('image/png');
+    })(),
+    objCourt:getObjs('obj-court'),objMoyen:getObjs('obj-moyen'),objLong:getObjs('obj-long'),
+    frequence:v('frequence'),dureeTraitement:v('duree-traitement'),
+    techniques:getChecks('tech'),planNotes:v('plan-notes'),
+    dateProchainBilan:v('date-prochain-bilan'),kineNom:v('kine-nom'),
+    valdInterp:v('vald-interp'),
+    valdRows:[...document.querySelectorAll('#vald-tbody tr')].map(tr=>{
+      const inp=tr.querySelectorAll('input');const sel=tr.querySelectorAll('select');
+      return{m:inp[0]?.value,d:inp[1]?.value,g:inp[2]?.value,u:sel[0]?.value,ratio:inp[3]?.value,ref:inp[4]?.value};
+    }).filter(r=>r.m),
+    valdChartImg:(()=>{try{return document.getElementById('vald-chart')?.toDataURL('image/png');}catch(e){return null;}})(),
+  };
+}
+function v(id){const el=document.getElementById(id);return el?el.value:'';}
+
+// ===== FILL DATA =====
+function fillData(d){
+  const set=(id,val)=>{const el=document.getElementById(id);if(el&&val!==undefined)el.value=val;};
+  const setRadio=(name,val)=>{const el=document.querySelector(`input[name="${name}"][value="${val}"]`);if(el)el.checked=true;};
+  const setChecks=(name,vals)=>{document.querySelectorAll(`input[name="${name}"]`).forEach(el=>el.checked=vals&&vals.includes(el.value));};
+
+  set('nom',d.nom);set('prenom',d.prenom);set('ddn',d.ddn);set('profession',d.profession);
+  set('dominance',d.dominance);set('date-bilan',d.dateBilan);
+  set('motif-type',d.motifType);set('region',d.region);set('motif-desc',d.motifDesc);
+  set('medecin',d.medecin);set('date-ordo',d.dateOrdo);
+  set('histoire',d.histoire);set('aggravants',d.aggravants);set('soulageants',d.soulageants);set('traitements',d.traitements);
+  set('atcd-med',d.atcdMed);set('atcd-chir',d.atcdChir);set('atcd-trauma',d.atcdTrauma);
+  set('medicaments',d.medicaments);set('allergies',d.allergies);
+  setRadio('activite',d.activite);set('sport',d.sport);set('contexte-pro',d.contextePro);
+
+  if(d.muscleRows){document.getElementById('muscle-tbody').innerHTML='';d.muscleRows.forEach(r=>addMuscleRow(r));}
+  if(d.articularRows){document.getElementById('articular-tbody').innerHTML='';d.articularRows.forEach(r=>addArticularRow(r));}
+  if(d.specificRows){document.getElementById('specific-tbody').innerHTML='';d.specificRows.forEach(r=>addSpecificRow(r));}
+  if(d.articulationSelect){document.getElementById('articu-select').value=d.articulationSelect;} set('testing-obs',d.testingObs);
+
+  if(d.painRest!=null)selectPain('pain-rest',parseInt(d.painRest));
+  if(d.painEffort!=null)selectPain('pain-effort',parseInt(d.painEffort));
+  if(d.painMax!=null)selectPain('pain-max',parseInt(d.painMax));
+  setRadio('pain-type',d.painType);setRadio('pain-char',d.painChar);set('pain-desc',d.painDesc);
+
+  set('scale-dash',d.scaleDash);set('scale-quickdash',d.scaleQuickdash);set('scale-ikdc',d.scaleIkdc);
+  set('scale-koos',d.scaleKoos);set('scale-hoos',d.scaleHoos);set('scale-constant',d.scaleConstant);
+  set('scale-ases',d.scaleAses);set('scale-oswestry',d.scaleOswestry);
+  set('scale-autre-nom',d.scaleAutreNom);set('scale-autre-val',d.scaleAutreVal);
+  set('fonc-obs',d.foncObs);
+
+  set('schema-notes',d.schemaNotes);
+  if(d.canvasData){
+    // Recharger uniquement les annotations (pas le fond)
+    const bgImg = document.getElementById('body-bg-img');
+    const tmpCanvas = document.createElement('canvas');
+    const tmpCtx = tmpCanvas.getContext('2d');
+    const annotImg = new Image();
+    annotImg.onload = () => {
+      tmpCanvas.width = annotImg.width; tmpCanvas.height = annotImg.height;
+      tmpCtx.drawImage(annotImg, 0, 0);
+      // Effacer le fond blanc/image pour ne garder que les annotations
+      // On recharge directement sur le canvas en compositing
+      resizeCanvas();
+      setTimeout(()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(annotImg, 0, 0, canvas.width, canvas.height);
+        // Effacer la partie image de fond (reconstruire annotations only est complexe, on garde le merge)
+      }, 300);
+    };
+    annotImg.src = d.canvasData;
+  }
+
+  if(d.objCourt){document.getElementById('obj-court').innerHTML='';d.objCourt.forEach(o=>addObj('obj-court',o));}
+  if(d.objMoyen){document.getElementById('obj-moyen').innerHTML='';d.objMoyen.forEach(o=>addObj('obj-moyen',o));}
+  if(d.objLong){document.getElementById('obj-long').innerHTML='';d.objLong.forEach(o=>addObj('obj-long',o));}
+
+  set('vald-interp',d.valdInterp);
+  if(d.valdRows&&d.valdRows.length){document.getElementById('vald-tbody').innerHTML='';d.valdRows.forEach(r=>addValdRow(r));}
+  set('frequence',d.frequence);set('duree-traitement',d.dureeTraitement);
+  setChecks('tech',d.techniques);set('plan-notes',d.planNotes);
+  set('date-prochain-bilan',d.dateProchainBilan);set('kine-nom',d.kineNom);
+}
+
+// ===== SAVE JSON =====
+function saveJSON(){
+  const d=collectData();
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  const nom=d.nom||'patient';const prenom=d.prenom||'';
+  a.href=URL.createObjectURL(blob);
+  a.download=`bilan_${nom}_${prenom}_${d.dateBilan||'sans-date'}.json`;
+  a.click();
+  showStatus('Fichier JSON sauvegardé — conservez-le pour recharger le bilan ultérieurement.');
+}
+
+// ===== IMPORT JSON =====
+function importData(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      fillData(d);
+      showStatus('Bilan rechargé avec succès — complétez ou modifiez les informations.');
+      showTab(0);
+    }catch(err){alert('Fichier invalide.');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function showStatus(msg){
+  const bar=document.getElementById('status-bar');
+  bar.textContent=msg;bar.style.display='block';
+  setTimeout(()=>bar.style.display='none',5000);
+}
+
+// ===== EXPORT PDF (print) =====
+function isFilledSection(fields){
+  return fields.some(v => v && v.trim && v.trim() !== '' && v !== '—');
+}
+
+function exportPDF(){
+  const d = collectData();
+  const nom = d.nom ? (d.prenom + ' ' + d.nom) : 'Patient non renseigné';
+  const date = d.dateBilan ? new Date(d.dateBilan).toLocaleDateString('fr-FR') : '—';
+
+  const painColors = ['#27ae60','#2ecc71','#a8d44e','#d4e44e','#f0d040','#f0b840','#f09040','#e06030','#c03020','#a01010','#700000'];
+
+  // Helpers
+  function row(label, val){
+    if(!val || !val.trim || !val.trim()) return '';
+    return '<tr><td style="color:#666;font-size:11px;padding:3px 8px;width:36%;font-weight:500">' + label + '</td><td style="font-size:12px;padding:3px 8px">' + val + '</td></tr>';
+  }
+  function sec(title, content){
+    if(!content || !content.trim()) return '';
+    return '<div style="margin-bottom:14px;page-break-inside:avoid">' +
+      '<div style="background:#1a2e4a;color:#fff;padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:0.4px;border-radius:4px 4px 0 0">' + title + '</div>' +
+      '<div style="border:1px solid #ddd;border-top:none;border-radius:0 0 4px 4px;padding:8px 10px">' + content + '</div>' +
+    '</div>';
+  }
+  function tableWrap(head, body){
+    if(!body.trim()) return '';
+    return '<table style="width:100%;border-collapse:collapse"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
+  }
+  function th(label, extra){ return '<th style="background:#f5f3ef;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:#666;padding:4px 6px;text-align:left' + (extra||'') + '">' + label + '</th>'; }
+  function td(val, extra){ return '<td style="font-size:11px;padding:3px 6px' + (extra||'') + '">' + (val||'—') + '</td>'; }
+
+  // IDENTITÉ
+  var identiteContent = '<table>' +
+    row('Date de naissance', d.ddn ? new Date(d.ddn).toLocaleDateString('fr-FR') : '') +
+    row('Profession', d.profession) +
+    row('Côté dominant', d.dominance) +
+    row('Médecin prescripteur', d.medecin) +
+    row('Ordonnance du', d.dateOrdo ? new Date(d.dateOrdo).toLocaleDateString('fr-FR') : '') +
+  '</table>';
+
+  // MOTIF
+  var motifContent = '<table>' +
+    row('Type', d.motifType) + row('Région', d.region) + row('Description', d.motifDesc) +
+    row('Histoire', d.histoire) + row('Aggravants', d.aggravants) +
+    row('Soulageants', d.soulageants) + row('Traitements', d.traitements) +
+  '</table>';
+
+  // ANTÉCÉDENTS
+  var atcdFilled = [d.atcdMed,d.atcdChir,d.atcdTrauma,d.medicaments,d.allergies,d.activite,d.sport].some(function(v){return v&&v.trim&&v.trim();});
+  var atcdContent = atcdFilled ? '<table>' +
+    row('Médicaux', d.atcdMed) + row('Chirurgicaux', d.atcdChir) +
+    row('Traumatiques / sportifs', d.atcdTrauma) + row('Médicaments', d.medicaments) +
+    row('Allergies', d.allergies) + row('Niveau activité', d.activite) +
+    row('Sport(s)', d.sport) + row('Contexte professionnel', d.contextePro) +
+  '</table>' : '';
+
+  // TESTING MUSCULAIRE
+  var muscleRows = d.muscleRows.filter(function(r){ return r.m && r.m.trim() && (r.d||r.g||r.r||r.obs); });
+  var muscleBody = muscleRows.map(function(r){
+    return '<tr>' + td(r.m) + td(r.d||'—','') + td(r.g||'—','') + td(r.r||'—','') + td(r.obs||'') + '</tr>';
+  }).join('');
+  var muscleHead = '<tr>' + th('Muscle / Groupe') + th('D (MMT)',';text-align:center') + th('G (MMT)',';text-align:center') + th('Réf.',';text-align:center') + th('Observations') + '</tr>';
+  var muscleContent = tableWrap(muscleHead, muscleBody);
+  if(muscleContent && d.testingObs) muscleContent += '<p style="font-size:11px;color:#555;margin-top:6px"><em>' + d.testingObs + '</em></p>';
+
+  // AMPLITUDES
+  var artRows = d.articularRows.filter(function(r){ return r.m && r.m.trim() && (r.d||r.g); });
+  var artBody = artRows.map(function(r){
+    var dv = parseFloat(r.d)||0, gv = parseFloat(r.g)||0;
+    var max = Math.max(dv,gv), min = Math.min(dv,gv);
+    var asym = max>0 ? Math.round((1-min/max)*100) : null;
+    var normV = parseFloat(r.n)||null;
+    var bestPct = normV&&max ? Math.round(max/normV*100) : null;
+    var asymColor = asym===null?'#aaa':asym<=10?'#27ae60':asym<=20?'#f39c12':'#c03020';
+    var asymText = asym!==null ? ('<span style="color:' + asymColor + ';font-weight:600">' + asym + '%</span>' + (bestPct?' | '+bestPct+'% N':'')) : '—';
+    return '<tr>' + td(r.m) + td(r.d||'—',';text-align:center') + td(r.g||'—',';text-align:center') +
+      td(r.n||'—',';text-align:center;color:#999') +
+      '<td style="font-size:11px;padding:3px 6px;text-align:center">' + asymText + '</td>' +
+      td(r.doul||'—',';text-align:center') + '</tr>';
+  }).join('');
+  var artHead = '<tr>' + th('Mouvement') + th('D (°)',';text-align:center') + th('G (°)',';text-align:center') + th('Norme',';text-align:center') + th('Asymétrie',';text-align:center') + th('Douleur',';text-align:center') + '</tr>';
+  var artContent = tableWrap(artHead, artBody);
+
+  // TESTS SPÉCIFIQUES
+  var specRows = d.specificRows.filter(function(r){ return r.n && r.n.trim() && r.r && r.r !== '' && r.r !== 'NR'; });
+  var specBody = specRows.map(function(r){
+    var rColor = r.r==='Positif'?'#c03020':r.r==='Négatif'?'#27ae60':r.r==='Douteux'?'#f39c12':'#888';
+    return '<tr>' + td(r.n,'') + td(r.s||'',';color:#888') +
+      '<td style="font-size:11px;padding:3px 6px;text-align:center;font-weight:600;color:' + rColor + '">' + r.r + '</td>' +
+      td(r.i||'') + '</tr>';
+  }).join('');
+  var specHead = '<tr>' + th('Test') + th('Structure') + th('Résultat',';text-align:center') + th('Interprétation') + '</tr>';
+  var specContent = tableWrap(specHead, specBody);
+
+  // DOULEUR
+  var painFilled = d.painRest!=null || d.painEffort!=null || d.painMax!=null || (d.painDesc&&d.painDesc.trim());
+  function painDot(val){
+    if(val==null) return '<span style="font-size:11px;color:#aaa">—</span>';
+    return '<span style="display:inline-block;width:28px;height:28px;border-radius:5px;text-align:center;line-height:28px;font-size:11px;font-weight:700;color:#fff;background:' + painColors[val] + '">' + val + '</span><span style="font-size:11px"> /10</span>';
+  }
+  var painContent = painFilled ? (
+    '<div style="margin-bottom:8px">' +
+    '<span style="font-size:11px;color:#666;font-weight:500">Repos : </span>' + painDot(d.painRest!=null?parseInt(d.painRest):null) +
+    '&nbsp;&nbsp;<span style="font-size:11px;color:#666;font-weight:500">Effort : </span>' + painDot(d.painEffort!=null?parseInt(d.painEffort):null) +
+    '&nbsp;&nbsp;<span style="font-size:11px;color:#666;font-weight:500">Maximum : </span>' + painDot(d.painMax!=null?parseInt(d.painMax):null) +
+    '</div><table>' + row('Type', d.painType) + row('Caractère', d.painChar) + row('Description', d.painDesc) + '</table>'
+  ) : '';
+
+  // ÉCHELLES
+  var scales = [
+    ['DASH', d.scaleDash, '/100'], ['QuickDASH', d.scaleQuickdash, '/100'],
+    ['IKDC', d.scaleIkdc, '/100'], ['KOOS', d.scaleKoos, '/100'],
+    ['HOOS', d.scaleHoos, '/100'], ['Constant', d.scaleConstant, '/100'],
+    ['ASES', d.scaleAses, '/100'], ['Oswestry', d.scaleOswestry, '%'],
+    [d.scaleAutreNom, d.scaleAutreVal, '']
+  ].filter(function(s){ return s[0]&&s[1]; });
+  var scalesBody = scales.map(function(s){
+    return '<tr><td style="font-size:11px;padding:3px 6px">' + s[0] + '</td><td style="font-size:11px;padding:3px 6px;font-weight:600">' + s[1] + s[2] + '</td></tr>';
+  }).join('');
+  var scalesContent = scalesBody ? (tableWrap('<tr>' + th('Échelle') + th('Score') + '</tr>', scalesBody) + (d.foncObs ? '<p style="font-size:11px;color:#555;margin-top:6px">' + d.foncObs + '</p>' : '')) : '';
+
+  // VALD
+  var valdRows = (d.valdRows||[]).filter(function(r){ return r.m; });
+  var valdBody = valdRows.map(function(r){
+    var gv = parseFloat(r.g)||0, dv = parseFloat(r.d)||0;
+    var max = Math.max(gv,dv), min = Math.min(gv,dv);
+    var asym = max>0 ? Math.round((1-min/max)*100) : null;
+    var aColor = asym===null?'#aaa':asym<=10?'#27ae60':asym<=20?'#f39c12':'#c03020';
+    return '<tr>' + td(r.m,'') + td(r.g||'—',';text-align:center') + td(r.d||'—',';text-align:center') +
+      td(r.u||'N',';text-align:center;color:#888') +
+      '<td style="font-size:11px;padding:3px 6px;text-align:center;font-weight:600;color:' + aColor + '">' + (asym!==null?asym+'%':'—') + '</td>' +
+      td(r.ratio||'—',';text-align:center') + '</tr>';
+  }).join('');
+  var valdHead = '<tr>' + th('Test DynaMo') + th('G',';text-align:center') + th('D',';text-align:center') + th('Unité',';text-align:center') + th('Asymétrie',';text-align:center') + th('Ratio ago/anta',';text-align:center') + '</tr>';
+  var valdContent = '';
+  if(valdBody){
+    valdContent = tableWrap(valdHead, valdBody);
+    if(d.valdChartImg) valdContent += '<img src="' + d.valdChartImg + '" style="width:100%;margin-top:10px;border-radius:4px">';
+    if(d.valdInterp) valdContent += '<p style="font-size:11px;color:#555;margin-top:8px">' + d.valdInterp + '</p>';
+  }
+
+  // SCHÉMA
+  var schemaContent = '<img src="' + d.canvasData + '" style="width:100%;max-width:500px;display:block;margin:0 auto;border:1px solid #eee;border-radius:4px">' +
+    (d.schemaNotes ? '<p style="font-size:11px;color:#555;margin-top:8px">' + d.schemaNotes + '</p>' : '');
+
+  // OBJECTIFS
+  function objList(arr, label){
+    if(!arr||!arr.length) return '';
+    return '<p style="font-size:10px;font-weight:600;color:#1a2e4a;text-transform:uppercase;letter-spacing:0.4px;margin:8px 0 4px">' + label + '</p>' +
+      arr.map(function(o,i){ return '<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px"><span style="background:#1a2e4a;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0">' + (i+1) + '</span><span style="font-size:12px">' + o + '</span></div>'; }).join('');
+  }
+  var objContent = objList(d.objCourt,'Court terme') + objList(d.objMoyen,'Moyen terme') + objList(d.objLong,'Long terme / retour au sport');
+
+  // PLAN
+  var techText = (d.techniques&&d.techniques.length) ? d.techniques.join(', ') : '';
+  var planContent = '<table>' +
+    row('Fréquence', d.frequence) + row('Durée', d.dureeTraitement) +
+    row('Techniques', techText) + row('Notes & protocole', d.planNotes) +
+    row('Prochain bilan', d.dateProchainBilan ? new Date(d.dateProchainBilan).toLocaleDateString('fr-FR') : '') +
+  '</table>';
+
+  // CONSTRUIRE LE HTML
+  var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">' +
+    '<title>Bilan — ' + nom + '</title>' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;font-size:12px;padding:20px;max-width:820px;margin:0 auto}' +
+    '@media print{body{padding:0}@page{margin:15mm 12mm;size:A4}}' +
+    'table{width:100%;border-collapse:collapse}tr:nth-child(even) td{background:#fafaf8}</style><script>
+// Navigation tabs — disponible immédiatement
+function showTab(n){
+  var contents = document.querySelectorAll('.tab-content');
+  var tabs = document.querySelectorAll('.tab');
+  contents.forEach(function(el,i){ el.style.display = i===n ? 'block' : 'none'; });
+  tabs.forEach(function(el,i){ 
+    if(i===n){ el.classList.add('active'); } else { el.classList.remove('active'); }
+  });
+}
+</script>
+</head><body>' +
+
+    // EN-TÊTE
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a2e4a">' +
+    '<div><h1 style="font-size:18px;color:#1a2e4a;font-weight:700">Bilan Kinésithérapie Initial</h1>' +
+    '<p style="font-size:11px;color:#888;margin-top:2px">Document confidentiel — dossier médical patient</p></div>' +
+    '<div style="text-align:right"><p style="font-size:13px;font-weight:600;color:#1a2e4a">' + nom + '</p>' +
+    '<p style="font-size:11px;color:#666">Bilan du ' + date + '</p>' +
+    (d.kineNom ? '<p style="font-size:11px;color:#888">Mk ' + d.kineNom + '</p>' : '') + '</div></div>' +
+
+    sec('👤 Identification', identiteContent) +
+    sec('🩺 Motif de consultation', motifContent) +
+    sec('🏥 Antécédents', atcdContent) +
+    sec('💪 Testing musculaire', muscleContent) +
+    sec('🔄 Amplitudes articulaires', artContent) +
+    sec('🔍 Tests ligamentaires & spécifiques', specContent) +
+    sec('😣 Évaluation de la douleur', painContent) +
+    sec('📊 Échelles fonctionnelles', scalesContent) +
+    sec('📊 Dynamométrie VALD — DynaMo', valdContent) +
+    sec('🧍 Schéma corporel', schemaContent) +
+    sec('🎯 Objectifs thérapeutiques', objContent) +
+    sec('📅 Plan de traitement', planContent) +
+
+    // SIGNATURE
+    '<div style="margin-top:24px;display:flex;justify-content:flex-end">' +
+    '<div style="text-align:center;border-top:1px solid #ccc;padding-top:8px;min-width:180px">' +
+    '<p style="font-size:11px;color:#666">Kinésithérapeute</p>' +
+    '<p style="font-size:13px;font-weight:600;color:#1a2e4a">' + (d.kineNom||'_________________') + '</p>' +
+    '<p style="font-size:10px;color:#aaa">27 Allée d\'Armainvilliers — Ozoir-la-Ferrière</p>' +
+    '</div></div>' +
+
+    '<scr' + 'ipt>window.onload=function(){window.print();}<' + '/scr' + 'ipt>' +
+    '</body></html>';
+
+  // Blob URL — évite les restrictions popup de Safari/HA
+  var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+}
+
+// Init date
+document.getElementById('date-bilan').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
